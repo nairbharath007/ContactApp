@@ -1,4 +1,5 @@
-﻿using ContactApp.Models;
+﻿using ContactApp.DTOs;
+using ContactApp.Models;
 using ContactApp.Repository;
 using ContactApp1.Repository;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +20,7 @@ namespace ContactApp.Controllers
 
             _userRepository = userRepository;
         }
-        [HttpGet("GetAll")]
+        [HttpGet("getAll")]
         //http:/localhost/api/Users/GetAll
         //'GetAll' will be attached to the end of url
 
@@ -31,30 +32,58 @@ namespace ContactApp.Controllers
 
         public IActionResult Get()
         {
+            List<UserDto> userDtos = new List<UserDto>();
             var users = _userRepository.GetAll();
             if (users.Count == 0)
                 return BadRequest("No User Added Yet.");
-            return Ok(users);
+            else
+            {
+                foreach(var user in users)
+                {
+                    userDtos.Add(ConvertToDto(user));
+                }
+            }
+            return Ok(userDtos);
         }
 
 /*        [HttpGet("GetById")]
-*/        [HttpGet("getById/{id:int}")]
+*/       [HttpGet("getById/{id:int}")]
 
-        public IActionResult Get(int id)
+        /*public IActionResult Get(int id)
         {
             var user = _userRepository.GetById(id);
             if (user != null)
                 return Ok(user);
             return NotFound("No such user exists.");
+        }*/
+
+        public IActionResult Get(int id)
+        {
+            var user = _userRepository.GetById(id);
+            if (user != null)
+            {
+                var userDto = ConvertToDto(user);
+                return Ok(userDto);
+            }     
+            return NotFound("No such user exists.");
         }
 
         [HttpPost("add")]
-        public IActionResult Add(User user)
+        /*public IActionResult Add(User user)
         {
             int newUserId = _userRepository.Add(user);
             if (newUserId!=null)
                 return Ok(newUserId);
             return BadRequest("Some issue while recording record.");
+        }*/
+        
+        public IActionResult Add(UserDto userDto)
+        {
+            var user = ConvertToModel(userDto);
+            int newUserId = _userRepository.Add(user);
+            if(newUserId!=null)
+                return Ok(newUserId);
+            return BadRequest("Some issue while inserting record.");
         }
 
         [HttpPut("update")]
@@ -73,6 +102,30 @@ namespace ContactApp.Controllers
             if(isRemoved)
                 return Ok(id);
             return BadRequest("No user found to delete.");
+        }
+
+        private User ConvertToModel(UserDto userDto)
+        {
+            return new User()
+            {
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                IsAdmin = userDto.IsAdmin,
+                IsActive = userDto.IsActive,
+            };
+        }
+
+        private UserDto ConvertToDto(User user)
+        {
+            return new UserDto()
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                IsAdmin = user.IsAdmin,
+                IsActive = user.IsActive,
+                CountContacts = user.Contacts != null?user.Contacts.Count():0
+            };
         }
     }
 }

@@ -1,19 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ContactApp.Models
+namespace ContactApp.DTOs
 {
-    public class Contact
+    public class ContactDto
     {
-        [Key]
         public int ContactId { get; set; }
+        [Required]
         public string FirstName { get; set; }
+        [Required]
         public string LastName { get; set; }
         public bool IsActive { get; set; }
-        public List<ContactDetail>? ContactDetails { get; set; }
-
-        public User User { get; set; }
-        [ForeignKey("User")]
+        public List<ContactDetailDto>? ContactDetails { get; set; }
         public int UserId { get; set; }
     }
 }
