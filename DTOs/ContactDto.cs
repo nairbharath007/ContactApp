@@ -10,7 +10,10 @@ namespace ContactApp.DTOs
         [Required]
         public string LastName { get; set; }
         public bool IsActive { get; set; }
-        public List<ContactDetailDto>? ContactDetails { get; set; }
+
+/*        public List<ContactDetailDto>? ContactDetails { get; set; }
+*/
         public int UserId { get; set; }
+        public int CountDetails { get; set; } = 0;
     }
 }

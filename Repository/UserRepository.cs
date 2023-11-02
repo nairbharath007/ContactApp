@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ContactApp1.Repository
 {
-    public class UserRepository: IUserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly MyContext _context;
         public UserRepository(MyContext context)
@@ -14,45 +14,67 @@ namespace ContactApp1.Repository
         }
         public List<User> GetAll()
         {
-            return _context.Users.Where(user => user.IsActive==true)
-/*                .Include(user => user.Contacts)
-*/                .ToList();
+            return _context.Users.Where(user => user.IsActive == true)
+                .Include(user => user.Contacts
+                .Where(contact => contact.IsActive == true))
+                .ToList();
         }
         public User GetById(int id)
         {
-            return _context.Users.Where(user => user.UserId == id && user.IsActive==true)
+            var user= _context.Users
+                .Where(user => user.UserId == id && user.IsActive == true)
                 .FirstOrDefault();
+            if(user!=null)
+                _context.Entry(user).State = EntityState.Detached;
+            return user;
+
         }
         public int Add(User user)
         {
             _context.Users.Add(user);
             _context.SaveChanges();
             var newUserId = _context.Users.Where(user1 => user1.FirstName == user.FirstName)
-                .OrderBy(usr => usr.UserId).LastOrDefault().UserId;
+                .OrderBy(user2 => user2.UserId).LastOrDefault().UserId;
             return newUserId;
         }
-        public User Update(User user)
+        public User Update(User updatedUser, User oldUser)
         {
-            var userToUpdate = GetById(user.UserId);
-            if(userToUpdate != null)
-            {
-                _context.Entry(userToUpdate).State = EntityState.Detached;
-                _context.Users.Update(user);
-                _context.SaveChanges();
-                return user;
-            }
-            return null;
+            _context.Entry(oldUser).State = EntityState.Detached;
+            _context.Users.Update(updatedUser);
+            _context.SaveChanges();
+            return updatedUser;
         }
-        public bool Delete(int id) //basically a soft update 
+        public void Delete(User user)
         {
-            var userToDelete = GetById(id);
-            if(userToDelete != null)
+            /*_context.Entry(user).State = EntityState.Modified;
+            user.IsActive = false;
+            _context.SaveChanges();*/
+
+            /*var contactsToDelete = _context.Contacts.Where(c => c.UserId == user.UserId).ToList();
+
+            foreach (var contact in contactsToDelete)
             {
-                userToDelete.IsActive = false;
-                _context.SaveChanges();
-                return true;
+                contact.IsActive = false;
             }
-            return false;
+            user.IsActive = false;
+            _context.SaveChanges();*/
+
+            _context.Entry(user).State= EntityState.Modified;
+            
+
+            var contactsToDelete = _context.Contacts
+                .Where(contact => contact.UserId == user.UserId);
+            foreach (var contact in contactsToDelete)
+            {
+                
+                var contactDetailsToDelete = _context.Details
+                    .Where(details => details.ContactId == contact.ContactId);
+                _context.Details.RemoveRange(contactDetailsToDelete);
+                contact.IsActive = false;
+            }
+            user.IsActive = false;
+            _context.SaveChanges();
+        
         }
     }
 }

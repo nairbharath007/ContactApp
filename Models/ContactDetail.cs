@@ -11,7 +11,10 @@ namespace ContactApp.Models
         public string NumberOrEMail { get; set; }
         public Contact Contact { get; set; }
 
+
         [ForeignKey("Contact")]
         public int ContactId { get; set; }
+
+        
     }
 }
